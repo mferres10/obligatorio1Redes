@@ -9,3 +9,4 @@ if __name__ == "__main__":
     result = connS1.echo_concat(msg1='a', msg2='b', msg3='c', msg4='d')
     assert result == 'abcd'
     print('Test de múltiples parámetros con nombres completado')
+    connS1.close()

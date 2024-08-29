@@ -95,8 +95,12 @@ class Server:
                     })
 
                 try:
-                    result = method(*params)
-                    print(result)
+                    if isinstance(params, dict):
+                        # Si los parámetros son un diccionario, se pasan como **kwargs
+                        result = method(**params)
+                    else:
+                        # Si los parámetros son una lista, se pasan como *args
+                        result = method(*params)
                 except TypeError:
                     return json.dumps({
                         "jsonrpc": "2.0",

@@ -13,6 +13,7 @@ class Util:
                 chunk = socket.recv(buffer_size).decode('utf-8')
                 if not chunk:  # Detecta si la conexión se cerró y no hay más datos
                     print("Connection closed by client")
+                    break
                     return None
                 response_data += chunk
                 iteration += 1
