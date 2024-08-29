@@ -4,6 +4,7 @@ import uuid
 from .util import Util
 
 class Client:
+
     def __init__(self, address, port):
         self.address = (address, port)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -26,12 +27,19 @@ class Client:
             else:
                 params = []
 
-            request = {
-                "jsonrpc": "2.0",
-                "method": name,
-                "params": params,
-                "id": str(uuid.uuid4()) if not notify else None
-            }
+            if not notify :
+                request = {
+                    "jsonrpc": "2.0",
+                    "method": name,
+                    "params": params,
+                    "id": str(uuid.uuid4())
+                }
+            else :
+                request = {
+                    "jsonrpc": "2.0",
+                    "method": name,
+                    "params": params
+                }
             jsonRequest = json.dumps(request)
             print(request)
             self.socket.sendall(jsonRequest.encode('utf-8'))
