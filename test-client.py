@@ -42,10 +42,11 @@ def test_client():
     print('Pruebas de casos sin errores completadas.')
     print('=============================')
     print('Iniciando pruebas de casos con errores.')
+    connS1.close()
 
     connS2 = connect('localhost', 8080)
     
-    try:
+    try:    
         connS2.echo()
     except Exception as e:
         print('Llamada incorrecta sin parámetros. Genera excepción necesaria.')
@@ -79,6 +80,7 @@ def test_client():
     
     print('=============================')
     print("Pruebas de casos con errores completadas.")
+    connS2.close()
     
 if __name__ == "__main__":
     test_client()

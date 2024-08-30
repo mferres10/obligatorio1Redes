@@ -2,7 +2,7 @@ import json
 
 class Util:
     @staticmethod
-    def readmsg(socket, max_iterations=20, buffer_size=1024, timeout=5):
+    def readmsg(socket, max_iterations=20, buffer_size=4096, timeout=5):
         response_data = ""
         iteration = 0
 
@@ -12,9 +12,7 @@ class Util:
             try:
                 chunk = socket.recv(buffer_size).decode('utf-8')
                 if not chunk:  # Detecta si la conexión se cerró y no hay más datos
-                    print("Connection closed by client")
-                    break
-                    return None
+                    raise RPCError(-32000 , "Connection closed by client")
                 response_data += chunk
                 iteration += 1
                 # Intentar parsear para ver si ya recibimos el mensaje completo
@@ -24,9 +22,13 @@ class Util:
                 except json.JSONDecodeError:
                     if iteration >= max_iterations:
                         print("Max iterations reached, closing connection")
-                        break
+                        raise json.JSONDecodeError
                     continue
-            except socket.timeout:
-                    raise Exception("Connection timed out.")
-        raise json.JSONDecodeError  # Si se alcanza el máximo de iteraciones, salir del bucle
-
+            except TimeoutError:
+                raise RPCError(-32000, "Connection timed out.")
+            
+class RPCError(Exception):
+    def __init__(self, code, msg):
+        super().__init__(f"RPCError {code}: {msg}")
+        self.code = code
+        self.message = msg

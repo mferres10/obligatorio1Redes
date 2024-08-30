@@ -4,9 +4,9 @@ if __name__ == "__main__":
     print('=============================')
     print('Iniciando pruebas de casos sin errores.')
     
-    connS1 = connect('localhost', 8080)
-
-    result = connS1.echo_concat(msg1='a', msg2='b', msg3='c', msg4='d')
-    assert result == 'abcd'
-    print('Test de múltiples parámetros con nombres completado')
-    connS1.close()
+    connS2 = connect('localhost', 8080)
+    
+    result = connS2.echo(message='No response!', notify=True)
+    assert result == None
+    print('Test de notificación completado.')
+    connS2.close()

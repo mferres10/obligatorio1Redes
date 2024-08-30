@@ -2,6 +2,7 @@ import socket
 import json
 import uuid
 from .util import Util
+from .util import RPCError
 
 class Client:
 
@@ -38,24 +39,21 @@ class Client:
                 request = {
                     "jsonrpc": "2.0",
                     "method": name,
-                    "params": params
+                    "params": params,
                 }
             jsonRequest = json.dumps(request)
-            print(request)
             self.socket.sendall(jsonRequest.encode('utf-8'))
 
             if not notify :
                 try:
                     # Uso el método Util.readmsg para recibir la respuesta
                     unparsed_data = Util.readmsg(self.socket)
-                    print(unparsed_data)
                     if not unparsed_data:
                         print("No se.")
 
                     parsed_data = json.loads(unparsed_data)
                     if "error" in parsed_data:
-                        # El SV retorno un mensaje de error asi que throweo esa exception
-                        raise Exception(f"RPC Error: {parsed_data['error']['message']}")
+                        raise RPCError(parsed_data['error']['code'], parsed_data['error']['message'])
                     else :
                         return parsed_data.get("result")
                     

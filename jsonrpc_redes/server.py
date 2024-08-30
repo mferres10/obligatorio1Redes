@@ -3,6 +3,7 @@ import socket
 import threading
 import json
 from .util import Util
+from .util import RPCError
 
 class Server:
     def __init__(self, address):
@@ -28,7 +29,7 @@ class Server:
 
     def handle_client(self, client_socket):
         try:
-            parsed_data = None
+            parsed_data = None      
             while True:
                 try:
                     # Lee una sola request del cliente utilizando la lógica de readmsg en la clase Util
@@ -37,12 +38,15 @@ class Server:
                         parsed_data = json.loads(unparsed_data)
                         response = self.process_request(parsed_data)
                         parsed_data = None
-                        print(response)
                         if response is not None:
                             client_socket.sendall(response.encode('utf-8'))
                         else:
                             continue
 
+                except RPCError as e:
+                    print(f"Client closed connection: " + e.message)
+                    break  # Salir del bucle y cerrar la conexión del lado del servidor
+                    
                 # Si se superaron las 20 iteraciones y el JSON seguia sin poder parsearse seguramente el JSON sea invalido
                 except json.JSONDecodeError:
                     response = json.dumps({
@@ -53,14 +57,12 @@ class Server:
                     client_socket.sendall(response.encode('utf-8'))
                     continue  # Continúa esperando nuevas solicitudes
 
-                except socket.timeout:
+                except TimeoutError:
                     print("Connection timed out")
                     break  # Salir del bucle si se alcanza el timeout
 
                 except Exception as e:
-                    print(f"Error reading message: {e}")
                     break  # Salir del bucle en caso de otras excepciones
-
 
         except Exception as e:
             print(f"Error handling client: {e}")
@@ -79,14 +81,13 @@ class Server:
                 "method" not in request_data or not isinstance(request_data["method"], str):
                     return json.dumps({
                         "jsonrpc": "2.0",
-                        "error": {"code": -32600, "message": "Invalid request_data"},
+                        "error": {"code": -32600, "message": "Invalid Request"},
                         "id": id  # El campo "id" puede no estar presente
                     })
 
                 method_name = request_data.get("method")
                 params = request_data.get("params", [])
                 method = self.methods.get(method_name)
-
                 if not method:
                     return json.dumps({
                         "jsonrpc": "2.0",
@@ -120,5 +121,8 @@ class Server:
                     "error": {"code": -32603, "message": "Internal error"},
                     "id": id
                 })
+            
+    def shutdown(self):
+        self.server_socket.close()
 
 
