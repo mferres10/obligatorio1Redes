@@ -9,6 +9,8 @@ class Server:
     def __init__(self, address):
         self.address = address
         self.methods = {}
+        self.threads = []  # List to keep track of active threads
+        self.running = True  # A flag to control the server loop
 
     def add_method(self, method, name=None):
         if name is None:
@@ -21,10 +23,17 @@ class Server:
         self.server_socket.listen()
         print(f"Server listening on {self.address}")
         
-        while True:
-            client_socket, client_address = self.server_socket.accept()
-            print(f"Connection from {client_address}")
-            threading.Thread(target=self.handle_client, args=(client_socket,)).start()      
+        while self.running:
+            try:
+                client_socket, client_address = self.server_socket.accept()
+                print(f"Connection from {client_address}")
+                client_thread = threading.Thread(target=self.handle_client, args=(client_socket,))
+                client_thread.start()
+                self.threads.append(client_thread)
+            except OSError:
+                break  # Break the loop if the socket is closed
+        for thread in self.threads:
+            thread.join()
         self.server_socket.close()
 
     def handle_client(self, client_socket):
@@ -123,6 +132,8 @@ class Server:
                 })
             
     def shutdown(self):
+        self.running = False
         self.server_socket.close()
+
 
 
