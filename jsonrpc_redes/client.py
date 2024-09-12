@@ -48,9 +48,6 @@ class Client:
                 try:
                     # Uso el método Util.readmsg para recibir la respuesta
                     unparsed_data = Util.readmsg(self.socket)
-                    if not unparsed_data:
-                        print("No se.")
-
                     parsed_data = json.loads(unparsed_data)
                     if "error" in parsed_data:
                         raise RPCError(parsed_data['error']['code'], parsed_data['error']['message'])

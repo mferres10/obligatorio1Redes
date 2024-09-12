@@ -15,6 +15,9 @@ class Server:
     def add_method(self, method, name=None):
         if name is None:
             name = method.__name__
+        # Validar que el nombre del método no comience con "rpc."
+        if name.startswith('rpc.'):
+            raise ValueError(f"El nombre del método '{name}' está reservado y no puede comenzar con 'rpc.'")
         self.methods[name] = method
 
     def serve(self):
@@ -37,46 +40,47 @@ class Server:
         self.server_socket.close()
 
     def handle_client(self, client_socket):
-        try:
-            parsed_data = None      
-            while True:
-                try:
-                    # Lee una sola request del cliente utilizando la lógica de readmsg en la clase Util
-                    unparsed_data = Util.readmsg(client_socket)
-                    if unparsed_data:
-                        parsed_data = json.loads(unparsed_data)
-                        response = self.process_request(parsed_data)
-                        parsed_data = None
-                        if response is not None:
-                            client_socket.sendall(response.encode('utf-8'))
-                        else:
-                            continue
+        parsed_data = None      
+        while True:
+            try:
+                # Lee una sola request del cliente utilizando la lógica de readmsg en la clase Util
+                unparsed_data = Util.readmsg(client_socket)
+                if unparsed_data:
+                    parsed_data = json.loads(unparsed_data)
+                    response = self.process_request(parsed_data)
+                    parsed_data = None
+                    if response is not None:
+                        client_socket.sendall(response.encode('utf-8'))
+                    else:
+                        continue
 
-                except RPCError as e:
-                    print(f"Client closed connection: " + e.message)
-                    break  # Salir del bucle y cerrar la conexión del lado del servidor
-                    
-                # Si se superaron las 20 iteraciones y el JSON seguia sin poder parsearse seguramente el JSON sea invalido
-                except json.JSONDecodeError:
+            except RPCError as e:
+                # Handle RPCError by checking the error code
+                if e.code == -32700:
+                    # Send a "Parse error" response back to the client
                     response = json.dumps({
                         "jsonrpc": "2.0",
                         "error": {"code": -32700, "message": "Parse error"},
                         "id": None
                     })
                     client_socket.sendall(response.encode('utf-8'))
-                    continue  # Continúa esperando nuevas solicitudes
+                    continue
+                # Si se superaron las iteraciones y el JSON seguia sin poder parsearse seguramente sea un cliente malicioso
+                elif e.code == 0:
+                    # Close the connection immediately for error codes 0 or 1
+                    print(f"Client connection closed due to error code {e.code}: {e.message}")
+                    break  # Exit the loop and close the connection
+                else:
+                    print(f"Client error: {e.message}")
+                    break  # For other error codes, exit the loop and close the connection
+                
+            except TimeoutError:
+                print("Connection timed out")
+                break  # Salir del bucle si se alcanza el timeout
 
-                except TimeoutError:
-                    print("Connection timed out")
-                    break  # Salir del bucle si se alcanza el timeout
-
-                except Exception as e:
-                    break  # Salir del bucle en caso de otras excepciones
-
-        except Exception as e:
-            print(f"Error handling client: {e}")
-        finally:
-            client_socket.close()
+            except Exception as e:
+                break  # Salir del bucle en caso de otras excepciones
+        client_socket.close()
 
 
     def process_request(self, request_data):
