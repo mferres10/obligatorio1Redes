@@ -2,14 +2,14 @@ from jsonrpc_redes import connect
 import socket
 import json
 from jsonrpc_redes import Util
-LOCALHOST = '200.100.0.15'
+SERVER1 = '200.100.0.15'
 SERVER2 = '200.0.0.10'
 LOCALHOST = 'localhost'
 
 
 def test_valid_scenario():
     print("Escenario valido...")
-    conn = connect(LOCALHOST, 8080)
+    conn = connect(SERVER1, 8080)
 
     # Test successful method calls
     assert conn.echo('Hello') == 'Hello'
@@ -22,7 +22,7 @@ def test_valid_scenario():
 def test_invalid_method():
     print("Metodo no existe...")
 
-    conn = connect(LOCALHOST, 8080)
+    conn = connect(SERVER1, 8080)
 
     try:
         conn.non_existent_method()
@@ -34,7 +34,7 @@ def test_invalid_method():
 def test_invalid_params():
     print("Test parametros invalidos...")
 
-    conn = connect(LOCALHOST, 8080)
+    conn = connect(SERVER1, 8080)
 
     try:
         conn.echo_concat('a', 'b')  # Missing parameters
@@ -48,7 +48,7 @@ def test_timeout():
 
     # Create a raw socket connection and send incomplete/invalid JSON
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((LOCALHOST, 8080))
+    client_socket.connect((SERVER1, 8080))
 
     invalid_json = '{"jsonrpc": "2.0", "method": "echo", "params": ["Hello"],'  # JSON incompleto deberia bloquearse el receive y tirar timeout
     client_socket.sendall(invalid_json.encode('utf-8'))
@@ -59,7 +59,7 @@ def test_timeout2():
 
     # Create a raw socket connection and send incomplete/invalid JSON
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((LOCALHOST, 8080))
+    client_socket.connect((SERVER1, 8080))
 
     invalid_json = '{"jsonrpc": "2.0", "method": "echo", "params": ["Hello"],'  # JSON incompleto deberia bloquearse el receive y tirar timeout
     client_socket.sendall(invalid_json.encode('utf-8'))
@@ -70,7 +70,7 @@ def test_JSONInvalido():
     print("Test JSON Invalido...")
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((LOCALHOST, 8080))
+    client_socket.connect((SERVER1, 8080))
 
     invalid_json = '{"jsonrpc": "2.0", "methoddinho": "echo", "parametrinhos": "He"]'  # JSON invalido deberia poder parsearlo pero fallar
     print(Util.is_wellformed_json(invalid_json))
@@ -89,7 +89,7 @@ def test_client_disconnect():
 
     # Connect and send a valid request but disconnect before getting a response
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((LOCALHOST, 8080))
+    client_socket.connect((SERVER1, 8080))
 
     valid_request = json.dumps({
         "jsonrpc": "2.0",
@@ -106,10 +106,10 @@ def test_client_disconnect():
 
 def test_cliente_cruzado():
     print("Conectando al Servidor 1...")
-    conn1 = connect('localhost', 8080)
+    conn1 = connect(SERVER1, 8080)
 
     print("Conectando al Servidor 2...")
-    conn2 = connect('localhost', 8081)
+    conn2 = connect(SERVER2, 8081)
 
     # Llamadas exitosas al Servidor 1
     print("Probando sumar en Servidor 1...")

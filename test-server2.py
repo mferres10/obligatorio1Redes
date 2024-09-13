@@ -2,7 +2,7 @@ from jsonrpc_redes import Server
 import threading
 import time
 import sys
-SERVERIP = 'localhost'
+SERVERIP = '200.0.0.10'
 
 def test_server2():
     host, port = SERVERIP, 8081
