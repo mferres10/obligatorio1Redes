@@ -95,7 +95,7 @@ class Server:
                     return json.dumps({
                         "jsonrpc": "2.0",
                         "error": {"code": -32600, "message": "Invalid Request"},
-                        "id": id  # El campo "id" puede no estar presente
+                        "id": id 
                     })
 
                 method_name = request_data.get("method")
